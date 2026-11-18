@@ -24,6 +24,18 @@ Die Navigationsdarstellung basiert auf dem Originalcode von Martin Czermin. Copy
    - Typ: **JavaScript-Modul**
 6. Browser/Wall Display neu laden.
 
+## Visueller Editor
+
+Die Karte bietet einen visuellen Lovelace-Konfigurationseditor. Dort kannst du:
+
+- Navigationseinträge hinzufügen und löschen
+- Einträge nach oben und unten verschieben
+- View-Pfad, Beschriftung und MDI-Icon bearbeiten
+- Eine optionale Entity für Klima- oder Media-Player-Status setzen
+- Einen optionalen Temperatursensor auswählen/eintragen
+
+Der originale Pill-Look und das Rendering der Navigation bleiben davon unberührt. YAML-Modus wird weiterhin unterstützt.
+
 ## Konfiguration
 
 Füge die Karte in jede Dashboard-View ein, auf der die Navigation erscheinen soll:
