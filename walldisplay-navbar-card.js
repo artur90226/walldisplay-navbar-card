@@ -159,9 +159,179 @@ class WallDisplayNavbarCard extends HTMLElement {
       b.setAttribute("aria-current", on ? "page" : "false");
     });
   }
+
+  static getConfigElement() {
+    return document.createElement("walldisplay-navbar-card-editor");
+  }
+
+  static getStubConfig() {
+    return {
+      type: "custom:walldisplay-navbar-card",
+      items: [
+        { path: "home", label: "Start", icon: "mdi:home" },
+        { path: "climate", label: "Klima", icon: "mdi:thermostat" },
+      ],
+    };
+  }
 }
 
 
+
+
+
+// Visual Lovelace editor. The card itself continues to use the upstream
+// WallDisplayNav rendering and styling without modifications.
+class WallDisplayNavbarCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = { items: [] };
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+  }
+
+  setConfig(config) {
+    this._config = {
+      ...config,
+      items: Array.isArray(config.items) ? config.items.map((item) => ({ ...item })) : [],
+    };
+    this._renderEditor();
+  }
+
+  _emitConfig() {
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      bubbles: true,
+      composed: true,
+      detail: { config: { ...this._config, items: this._config.items.map((item) => ({ ...item })) } },
+    }));
+  }
+
+  _field(label, value, key, index, placeholder = "") {
+    const wrap = document.createElement("label");
+    wrap.className = "field";
+    const caption = document.createElement("span");
+    caption.textContent = label;
+    const input = document.createElement("ha-textfield");
+    input.label = label;
+    input.value = value || "";
+    input.placeholder = placeholder;
+    input.autocomplete = "off";
+    input.addEventListener("input", (ev) => {
+      const next = ev.target.value;
+      this._config.items[index][key] = next;
+      this._emitConfig();
+    });
+    wrap.append(caption, input);
+    return wrap;
+  }
+
+  _button(text, title, action, disabled = false) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = text;
+    button.title = title;
+    button.disabled = disabled;
+    button.addEventListener("click", action);
+    return button;
+  }
+
+  _renderEditor() {
+    const style = document.createElement("style");
+    style.textContent = `
+      :host { display:block; color:var(--primary-text-color); }
+      .intro { color:var(--secondary-text-color); margin:0 0 12px; }
+      .item { border:1px solid var(--divider-color); border-radius:12px; padding:12px; margin:0 0 12px; }
+      .item-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+      .item-title { flex:1; font-weight:600; }
+      .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+      .field span { font-size:12px; color:var(--secondary-text-color); }
+      ha-textfield { width:100%; }
+      .actions { display:flex; gap:6px; }
+      button { border:1px solid var(--divider-color); background:var(--secondary-background-color); color:var(--primary-text-color); border-radius:8px; padding:7px 11px; cursor:pointer; }
+      button[disabled] { opacity:.35; cursor:default; }
+      .add { background:var(--primary-color); color:var(--text-primary-color,#fff); border:0; padding:10px 14px; font-weight:600; }
+      .footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+      .hint { color:var(--secondary-text-color); font-size:12px; }
+      @media(max-width:480px) { .fields { grid-template-columns:1fr; } }
+    `;
+
+    const root = document.createElement("div");
+    const intro = document.createElement("p");
+    intro.className = "intro";
+    intro.textContent = "Konfiguriere die Einträge deiner WallDisplay-Navigation.";
+    root.append(intro);
+
+    this._config.items.forEach((item, index) => {
+      const card = document.createElement("section");
+      card.className = "item";
+      const head = document.createElement("div");
+      head.className = "item-head";
+      const title = document.createElement("div");
+      title.className = "item-title";
+      title.textContent = `Navigation ${index + 1}`;
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      actions.append(
+        this._button("↑", "Nach oben", () => this._move(index, -1), index === 0),
+        this._button("↓", "Nach unten", () => this._move(index, 1), index === this._config.items.length - 1),
+        this._button("✕", "Eintrag löschen", () => this._remove(index))
+      );
+      head.append(title, actions);
+      const fields = document.createElement("div");
+      fields.className = "fields";
+      fields.append(
+        this._field("View-Pfad", item.path, "path", index, "z. B. home oder climate"),
+        this._field("Beschriftung", item.label, "label", index, "z. B. Start"),
+        this._field("Icon (MDI)", item.icon, "icon", index, "mdi:home"),
+        this._field("Entity (optional)", item.entity, "entity", index, "climate.wohnzimmer"),
+        this._field("Temperatursensor (optional)", item.temperature_entity, "temperature_entity", index, "sensor.wohnzimmer_temperatur")
+      );
+      card.append(head, fields);
+      root.append(card);
+    });
+
+    const footer = document.createElement("div");
+    footer.className = "footer";
+    footer.append(
+      this._button("+ Navigation hinzufügen", "Neuen Navigationseintrag hinzufügen", () => this._add(), false)
+    );
+    footer.lastChild.classList.add("add");
+    const hint = document.createElement("span");
+    hint.className = "hint";
+    hint.textContent = "Pfade sind View-IDs, z. B. home oder climate.";
+    footer.append(hint);
+    root.append(footer);
+    this.shadowRoot.replaceChildren(style, root);
+  }
+
+  _add() {
+    this._config.items.push({ path: "home", label: "Neu", icon: "mdi:circle" });
+    this._renderEditor();
+    this._emitConfig();
+  }
+
+  _remove(index) {
+    this._config.items.splice(index, 1);
+    this._renderEditor();
+    this._emitConfig();
+  }
+
+  _move(index, direction) {
+    const target = index + direction;
+    if (target < 0 || target >= this._config.items.length) return;
+    const [item] = this._config.items.splice(index, 1);
+    this._config.items.splice(target, 0, item);
+    this._renderEditor();
+    this._emitConfig();
+  }
+}
+
+if (!customElements.get("walldisplay-navbar-card-editor")) {
+  customElements.define("walldisplay-navbar-card-editor", WallDisplayNavbarCardEditor);
+}
 
 if (!customElements.get("walldisplay-navbar-card")) {
   customElements.define("walldisplay-navbar-card", WallDisplayNavbarCard);
