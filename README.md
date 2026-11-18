@@ -1,113 +1,123 @@
 # WallDisplay Navbar Card
 
-Eine kompakte, schwebende **Bottom-Navigation** für Home Assistant – gedacht für Wall Displays und kleine Displays wie 480 × 480 Pixel.
+Die eigenständige Home-Assistant-Karte mit dem **originalen Navigations-Pill-Design** aus [Wall Display Dashboards](https://github.com/RapierXbox/walldisplay-dashboards) – ohne den Dashboard-Generator installieren zu müssen.
 
-- Schwebende Leiste am unteren Bildschirmrand
-- Aktive View wird automatisch hervorgehoben
-- MDI-Icons und optionale Beschriftungen
-- Eigene Ziele, Farben, Abstände und Größen
-- Kein zusätzlicher Frontend-Abhängigkeiten
+## Was übernommen wurde
+
+- Originale Pill-Höhe von 56 px und Rundung von 28 px
+- Originale Abstände, Schatten und Rahmen
+- Originale vertikale Icon-/Text-Anordnung
+- Originale 24-px-Icons und 14-px-Beschriftung
+- Originale Hervorhebung des aktiven Eintrags
+- Live-Anzeige für Media-Player und Klima-Entities (optional)
+
+Die Navigationsdarstellung basiert auf dem Originalcode von Martin Czermin. Copyright- und MIT-Lizenzhinweise sind in der JavaScript-Datei und in `LICENSE` enthalten.
 
 ## Installation über HACS
 
 1. Öffne **HACS → ⋮ → Benutzerdefinierte Repositories**.
-2. Repository eintragen: `artur90226/walldisplay-navbar-card`
-3. Kategorie **Dashboard** auswählen und hinzufügen.
-4. „WallDisplay Navbar Card“ installieren.
+2. Repository: `artur90226/walldisplay-navbar-card`
+3. Kategorie: **Dashboard**
+4. Repository hinzufügen und **WallDisplay Navbar Card** installieren.
 5. Falls HACS die Ressource nicht automatisch registriert, füge sie unter **Einstellungen → Dashboards → Ressourcen** hinzu:
-
    - URL: `/hacsfiles/walldisplay-navbar-card/walldisplay-navbar-card.js`
-   - Ressourcentyp: **JavaScript-Modul**
+   - Typ: **JavaScript-Modul**
+6. Browser/Wall Display neu laden.
 
-6. Browser bzw. Wall Display neu laden.
+## Konfiguration
 
-## Einfaches Beispiel
-
-Füge die Karte in jede Dashboard-View ein, in der die Navigation erscheinen soll:
+Füge die Karte in jede Dashboard-View ein, auf der die Navigation erscheinen soll:
 
 ```yaml
 type: custom:walldisplay-navbar-card
 items:
-  - path: /wallpanel/start
-    label: Start
+  - path: home
+    label: Home
     icon: mdi:home
-  - path: /wallpanel/licht
+  - path: licht
     label: Licht
     icon: mdi:lightbulb-group
-  - path: /wallpanel/klima
+  - path: klima
     label: Klima
     icon: mdi:thermometer
-  - path: /wallpanel/mehr
+  - path: mehr
     label: Mehr
     icon: mdi:dots-horizontal
 ```
 
-**Wichtig:** Ersetze `/wallpanel/start` usw. durch die tatsächlichen URLs deiner Dashboard-Views. Die URL setzt sich aus Dashboard-Pfad und View-Pfad zusammen. Bei einem Dashboard unter `/lovelace` und einer View namens `home` lautet der Pfad beispielsweise `/lovelace/home`.
+Bei relativen Pfaden wie `home`, `licht` usw. wird das aktuelle Dashboard als Basis verwendet. Du kannst alternativ vollständige Pfade angeben, zum Beispiel `/wallpanel/home`.
 
-## Optionen
+## Optionale Funktionen
 
-Alle Optionen sind optional, außer `items`.
+### Labels ausblenden
 
 ```yaml
 type: custom:walldisplay-navbar-card
-position: bottom
-bottom: 12px
-show_labels: true
-active_color: var(--primary-color)
-inactive_color: var(--secondary-text-color)
-background: rgba(25, 25, 32, 0.88)
-border_radius: 28px
-icon_size: 22px
-font_size: 12px
-height: 48px
-gap: 4px
-padding: 7px
-max_width: calc(100vw - 24px)
+show_labels: false
 items:
-  - path: /wallpanel/start
-    label: Start
+  - path: home
     icon: mdi:home
+  - path: licht
+    icon: mdi:lightbulb-group
 ```
+
+### Temperatur auf dem Klima-Eintrag
+
+```yaml
+- path: klima
+  label: Klima
+  icon: mdi:thermometer
+  entity: climate.wohnzimmer
+``
+
+Bei einer Klima-Entity wird – sofern verfügbar – die aktuelle Temperatur als Beschriftung angezeigt.
+
+Du kannst auch einen beliebigen Temperatursensor verwenden:
+
+```yaml
+- path: klima
+  label: Klima
+  icon: mdi:thermometer
+  temperature_entity: sensor.wohnzimmer_temperatur
+```
+
+### Media-Player-Status
+
+```yaml
+- path: media
+  label: Media
+  icon: mdi:play-circle
+  entity: media_player.wohnzimmer
+``
+
+Während der Wiedergabe wird das Icon automatisch als aktiv markiert und auf `mdi:speaker-play` umgestellt.
+
+## Eintragsoptionen
+
+| Option | Beschreibung |
+|---|---|
+| `path` | Ziel-View; relativ zum aktuellen Dashboard oder als vollständiger Pfad |
+| `label` | Beschriftung |
+| `icon` | MDI-Icon, z. B. `mdi:home` |
+| `title` | Optionaler Accessibility-Name |
+| `entity` | Optionale Climate- oder Media-Player-Entity |
+| `temperature_entity` | Optionaler Temperatursensor |
+| `exact` | Bei `false` werden auch Unterpfade als aktiv erkannt |
+
+## Allgemeine Optionen
 
 | Option | Standard | Beschreibung |
 |---|---|---|
-| `items` | erforderlich | Liste der Navigationsziele |
-| `position` | `bottom` | Position: `bottom` oder `top` |
-| `bottom` | `16px` | Abstand zur unteren Kante; wird auch als Fallback für `top` verwendet |
-| `top` | – | Optionaler Abstand zur oberen Kante, wenn `position: top` gesetzt ist |
+| `items` | erforderlich | Navigationsziele |
+| `position` | `bottom` | `bottom` oder `top` |
 | `show_labels` | `true` | Beschriftungen anzeigen |
-| `active_color` | `var(--primary-color)` | Farbe des aktiven Eintrags |
-| `inactive_color` | `var(--secondary-text-color)` | Farbe inaktiver Einträge |
-| `background` | HA-Kartenhintergrund | Hintergrund der Navigationsleiste |
-| `border_radius` | `28px` | Rundung der Leiste |
-| `icon_size` | `22px` | Größe der Icons |
-| `font_size` | `12px` | Schriftgröße der Beschriftungen |
-| `height` | `48px` | Höhe der Navigationselemente |
-| `gap` | `4px` | Abstand zwischen Elementen |
-| `padding` | `7px` | Innenabstand der Leiste |
-| `max_width` | `calc(100vw - 24px)` | Maximale Breite |
 
-### Eintrag-Optionen
+Das visuelle Styling folgt absichtlich dem Original-Pill-Design. Es ist kein separates Theme- oder Layout-System erforderlich.
 
-Jeder Eintrag in `items` unterstützt:
+## 480 × 480 Wall Display
 
-- `path` – Zielpfad der Dashboard-View
-- `label` – angezeigter Text
-- `icon` – MDI-Icon, z. B. `mdi:home`
-- `title` – optionaler Tooltip/Accessibility-Name
-- `exact` – standardmäßig wird nur die exakte View hervorgehoben. Mit `false` werden auch Unterpfade als aktiv erkannt.
-
-## Hinweise für Wall Displays
-
-- Die Leiste ist am Viewport fixiert und schwebt über dem Dashboard-Inhalt.
-- Plane am unteren Rand etwas Platz ein, damit keine Schaltflächen verdeckt werden.
-- Die Karte muss auf jeder View eingefügt werden, auf der sie sichtbar sein soll.
-- Für ein 480 × 480 Display empfiehlt sich eine kurze Navigation mit drei bis vier Einträgen.
-
-## Fehler melden
-
-Bitte bei einem Fehler die Home-Assistant-Version, das Gerät bzw. den Browser und die verwendete YAML-Konfiguration angeben.
+Das Original-Pill-Layout verwendet 56 px Höhe und 76 px Breite pro Eintrag. Auf einem 480 × 480 Display sind vier kurze Navigationseinträge ein guter Ausgangspunkt. Die Karte wird in jede View eingefügt, auf der sie erscheinen soll.
 
 ## Lizenz
 
-MIT
+MIT – siehe [LICENSE](LICENSE). Das ursprüngliche Navigationsdesign und die übernommenen CSS-/Verhaltensanteile stammen aus Wall Display Dashboards von Martin Czermin.
