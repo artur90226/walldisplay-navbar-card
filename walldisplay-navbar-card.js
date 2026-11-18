@@ -83,9 +83,16 @@ class WallDisplayNavbarCard extends HTMLElement {
   _isActive(item) {
     const current = this._currentPath();
     const target = String(item.path || "").replace(/\/$/, "") || "/";
-    if (item.exact === false) return current === target || current.startsWith(target + "/");
-    // Accept a full dashboard URL or just the view's final URL segment.
-    return current === target || current.split("/").filter(Boolean).at(-1) === target.replace(/^\//, "");
+    const currentParts = current.split("/").filter(Boolean);
+    const targetParts = target.split("/").filter(Boolean);
+    const currentView = currentParts.at(-1) || "home";
+    const targetView = targetParts.at(-1) || "home";
+    if (item.exact === false) {
+      return current === target || currentView === targetView || current.startsWith(target + "/");
+    }
+    // Full URLs such as /wallpanel/start and relative view paths such as start
+    // both identify a view by their final URL segment.
+    return current === target || currentView === targetView;
   }
 
   _navigate(item) {
