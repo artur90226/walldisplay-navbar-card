@@ -1,4 +1,7 @@
-# WallDisplay Navbar Card
+# WallDisplay Navbar Card — ALPHA
+
+> **Alpha-Software:** Die Karte befindet sich in aktiver Entwicklung. Fehler, unvollständige Funktionen und Änderungen an der Konfiguration sind möglich. Bitte vor Updates die YAML-Konfiguration sichern.
+
 
 Die eigenständige Home-Assistant-Karte mit dem **originalen Navigations-Pill-Design** aus [Wall Display Dashboards](https://github.com/RapierXbox/walldisplay-dashboards) – ohne den Dashboard-Generator installieren zu müssen.
 
