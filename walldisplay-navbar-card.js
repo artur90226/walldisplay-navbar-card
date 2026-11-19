@@ -213,14 +213,16 @@ class WallDisplayNavbarCardEditor extends HTMLElement {
     wrap.className = "field";
     const caption = document.createElement("span");
     caption.textContent = label;
-    const input = document.createElement("ha-textfield");
-    input.label = label;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "editor-input";
     input.value = value || "";
     input.placeholder = placeholder;
     input.autocomplete = "off";
-    input.addEventListener("input", (ev) => {
-      const next = ev.target.value;
-      this._config.items[index][key] = next;
+    input.spellcheck = false;
+    input.setAttribute("aria-label", label);
+    input.addEventListener("input", () => {
+      this._config.items[index][key] = input.value;
       this._emitConfig();
     });
     wrap.append(caption, input);
@@ -248,7 +250,15 @@ class WallDisplayNavbarCardEditor extends HTMLElement {
       .fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
       .field { display:flex; flex-direction:column; gap:5px; min-width:0; }
       .field span { font-size:12px; color:var(--secondary-text-color); }
-      ha-textfield { width:100%; }
+      .editor-input {
+        box-sizing:border-box; width:100%; min-width:0; height:42px; padding:0 10px;
+        border:1px solid var(--input-idle-line-color, var(--divider-color));
+        border-radius:6px; background:var(--input-fill-color, var(--card-background-color));
+        color:var(--primary-text-color); font:inherit; font-size:14px;
+        outline:none; pointer-events:auto; user-select:text; -webkit-user-select:text;
+      }
+      .editor-input:focus { border-color:var(--primary-color); box-shadow:0 0 0 1px var(--primary-color); }
+      .editor-input::placeholder { color:var(--secondary-text-color); opacity:.8; }
       .actions { display:flex; gap:6px; }
       button { border:1px solid var(--divider-color); background:var(--secondary-background-color); color:var(--primary-text-color); border-radius:8px; padding:7px 11px; cursor:pointer; }
       button[disabled] { opacity:.35; cursor:default; }
@@ -341,8 +351,8 @@ window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === "walldisplay-navbar-card")) {
   window.customCards.push({
     type: "walldisplay-navbar-card",
-    name: "WallDisplay Navbar Card",
-    description: "Standalone version of the original Wall Display Dashboards navigation pill.",
+    name: "WallDisplay Navbar Card (Alpha)",
+    description: "ALPHA — Standalone version of the original Wall Display Dashboards navigation pill.",
     preview: false,
     documentationURL: "https://github.com/artur90226/walldisplay-navbar-card",
   });
