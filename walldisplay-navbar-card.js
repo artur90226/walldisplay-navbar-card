@@ -221,10 +221,63 @@ class WallDisplayNavbarCardEditor extends HTMLElement {
     input.autocomplete = "off";
     input.spellcheck = false;
     input.setAttribute("aria-label", label);
+
+    // Keep typing local. Emitting config-changed on every keystroke causes
+    // Home Assistant to rebuild the editor and dismiss the mobile keyboard.
+    const commit = () => {
+      this._config.items[index][key] = input.value.trim();
+      this._emitConfig();
+    };
     input.addEventListener("input", () => {
       this._config.items[index][key] = input.value;
-      this._emitConfig();
     });
+    input.addEventListener("change", commit);
+    input.addEventListener("blur", commit);
+
+    if (key === "icon") {
+      const listId = `wdnc-icons-${index}`;
+      input.setAttribute("list", listId);
+      const list = document.createElement("datalist");
+      list.id = listId;
+      const icons = [
+        "mdi:home", "mdi:home-outline", "mdi:lightbulb", "mdi:lightbulb-group",
+        "mdi:lightbulb-group-outline", "mdi:thermostat", "mdi:thermometer",
+        "mdi:fan", "mdi:air-conditioner", "mdi:weather-sunny", "mdi:weather-night",
+        "mdi:blinds", "mdi:window-shutter", "mdi:door", "mdi:garage",
+        "mdi:play", "mdi:play-circle", "mdi:speaker", "mdi:speaker-play",
+        "mdi:music", "mdi:television", "mdi:volume-high", "mdi:volume-medium",
+        "mdi:sofa", "mdi:bed", "mdi:lamp", "mdi:power", "mdi:cog",
+        "mdi:dots-horizontal", "mdi:arrow-left", "mdi:arrow-right",
+        "mdi:chevron-left", "mdi:chevron-right", "mdi:menu", "mdi:calendar",
+        "mdi:weather-cloudy", "mdi:water", "mdi:lock", "mdi:camera",
+        "mdi:shield-home", "mdi:chart-line", "mdi:battery", "mdi:car"
+      ];
+      icons.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        list.append(option);
+      });
+      wrap.append(caption, input, list);
+      return wrap;
+    }
+
+    if (key === "entity" || key === "temperature_entity") {
+      const listId = `wdnc-entities-${index}-${key}`;
+      input.setAttribute("list", listId);
+      const list = document.createElement("datalist");
+      list.id = listId;
+      const states = this._hass?.states || {};
+      Object.keys(states).sort().forEach((entityId) => {
+        const option = document.createElement("option");
+        option.value = entityId;
+        const friendly = states[entityId]?.attributes?.friendly_name;
+        if (friendly) option.label = friendly;
+        list.append(option);
+      });
+      wrap.append(caption, input, list);
+      return wrap;
+    }
+
     wrap.append(caption, input);
     return wrap;
   }
